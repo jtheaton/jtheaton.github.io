@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Middlesex County New Jersey Webmap</title>
+        
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+   integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+   crossorigin=""/>
+ <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+   crossorigin=""></script>
+        
+    <link rel="stylesheet" href="leaflet-overview.css" />
+    <script src="leaflet-overview.js"></script>
+        <script src="railStaVil.js"></script>        
+        <script src="railPassMiddle.js"></script>
+        <script src="middleMuns.js"></script>
+        
+    <style>
+        html, body, #map {
+            width: 90%;
+            height: 95%;
+            margin: 10px auto;
+            background-color: gainsboro;
+        }
+        h1 {
+            text-align: center;
+        }
+        header {
+            padding: 6px 10%;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+            text-align: justify;
+        }
+        .positive {
+            color: green;
+        }
+        .negative {
+            color: red;
+        }
+        .same {
+            color: tan
+        }
+        posi {
+            color: green;
+        }
+        neg {
+            color: red;
+        }
+        tranvil {
+            color:blue;
+        }
+        novil {
+            color: yellow;
+        }
+        </style>
+    </head>
+
+    <body>
+        
+    <header>
+        <h1>Mapping Population Change, Rail Line and Station Access within Middlesex County, New Jersey</h1>
+    </header>
+        
+        <div id="map"></div>
+
+    <footer>
+        
+        <h2>How to read the web map</h2>
+        <p>When toggled on the municipalities that make up Middlesex County as well as the rail lines that pass through and the location of the stations. When hovered over, each municipality will respond by displaying a color associated with it’s respective population change between the 2000 and 2010 census (i.e., an increase is shown in <posi>green</posi> and a decline is shown in <neg>red</neg>). Clicking on each municipality will display a pop up with the respective name and population statistics along with the change value.<br><br>
+            The rail lines will transition from black to white when hovered over and similar to the municipality layer, a pop up that indicates the line name will display upon clicking the feature. The rail stations are separated into two categories:
+        <ul>
+            <li><b><tranvil>Station has a transit village</tranvil></b></li>
+            <li><b><novil>Station does not have an associated transit village</novil></b></li>
+        </ul>
+        Both categories will transition to orange upon a hover and will display associated information when clicked.
+        <p>
+    
+    </footer>
+
+    
+        <script>
+// Base layers
+    var hyddaBase = L.tileLayer('https://{s}.tile.openstreetmap.se/hydda/base/{z}/{x}/{y}.png', {
+		attribution: '<a href="http://openstreetmap.se/" target="_blank">OpenStreetMap Sweden</a><br><a href="https://github.com/jtheaton">James Heaton</a> | Web Mapping &amp; Map Servers | Spring 2019'
+    }),
+    esriWM = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri <br><a href="https://github.com/jtheaton">James Heaton</a> | Web Mapping &amp; Map Servers | Spring 2019'
+    });
+
+    function style(feature)  {
+        if (feature.properties.COUNTY == 'MIDDLESEX' && feature.properties.TRANSIT_VL == 'Y') {
+            return ({
+                radius: 8,
+                fillColor: '#3498DB',
+                color: "#D0D3D4",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            });
+        }
+        else {return ({
+            radius: 8,
+            fillColor: "#F4D03F",
+            color: "#D0D3D4",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+            });
+        }
+    };
+            
+    var railStaVil = L.geoJSON(railStaVil, {
+            pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng,style(feature))
+    },
+        filter: function(feature, layer) {
+            console.log(feature.properties)
+            if(feature.properties.COUNTY == 'MIDDLESEX'){
+                return feature;
+            }
+        },    
+        onEachFeature : function(feature, layer) {
+//            console.log(layer)
+            layer.on('mouseover',function(){
+                layer.setStyle({
+                    fillColor: '#E67E22'
+                }),
+            layer.bindPopup("<b>Station Name: </b>"+feature.properties.STATION+"<br><b>Rail Line: </b>"+feature.properties.LINE+"<br><b>Amtrak Service: </b>"+feature.properties.AMTRAK+"<br><b>Transit Village Station: </b>"+feature.properties.TRANSIT_VL)
+            });
+            
+            layer.on('mouseout', function(){
+                layer.bindPopup().closePopup(),
+                railStaVil.setStyle(style);
+                });      
+        }
+    });
+
+    var railPassMiddle = L.geoJSON(railPassMiddle, {
+            style: styleRail,
+            onEachFeature: rail        
+    }),
+        middleMuns = L.geoJSON(middleMuns, {
+            style: styleMun,
+            onEachFeature: muns        
+    });
+
+// Initialize the map with our default layer
+    var map = L.map('map', {
+        center: [40.439061,-74.411863],
+        zoom:   11,
+        layers: [esriWM, hyddaBase]
+    });
+
+    var baseMaps = {
+        'Esri World Map': esriWM,
+        'Open Street Map': hyddaBase
+    };
+
+    L.control.scale({
+        position: 'bottomleft',
+        imperial: true,
+        metric: true
+    }).addTo(map);
+
+// Add base layers for the overview map
+    var hyddaBase_Inset = L.tileLayer('https://{s}.tile.openstreetmap.se/hydda/base/{z}/{x}/{y}.png', {
+		  attribution: '<a href="http://openstreetmap.se/" target="_blank">OpenStreetMap Sweden</a><br><a href="https://github.com/jtheaton">James Heaton</a> | Web Mapping &amp; Map Servers | Spring 2019'
+    }),
+        esriWMInset =   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community<a href="https://github.com/jtheaton">James Heaton</a> | Web Mapping &amp; Map Servers | Spring 2019'
+    });
+
+// Legend controls      
+    var geoLayers = {
+        "<b>Middlesex County Municipalities</b>": middleMuns,
+        "<b>Middlesex County Passager Rail Line </b>": railPassMiddle,
+        "<b>Middlesex County Passager Rail Station </b>": railStaVil
+    };
+
+    L.control.layers(baseMaps, geoLayers, {collapsed: false}).addTo(map);
+            
+    map.on("overlayadd", function (event) {
+        railPassMiddle.bringToFront();
+        railStaVil.bringToFront();
+    });
+
+// Overview map control
+    L.control.overview([hyddaBase_Inset, esriWMInset]).addTo(map);
+
+
+//GeoSJON action
+    function styleMun(feature) {
+        return {
+            weight: 2,
+            opacity: 1,
+            color: '#F5CBA7',
+            dashArray: '4',
+            fillColor: '#797D7F',
+            fillOpacity: 0.7,
+            };
+    }
+
+    function styleRail(feature) {
+        return {
+            weight: 4,
+            color: '#000000',
+            dashArray: '5',
+            };
+    };
+
+    function muns (feature, layer) {
+//        console.log(feature.properties.POP2000)
+        var popDiff = (feature.properties.POP2010 - feature.properties.POP2000);
+//        console.log(popDiff)
+        if (popDiff > 0) {
+            var updateCol = 'green',
+                colorClass = 'positive';
+            }
+            else if (popDiff < 0){
+                var updateCol = 'red',
+                    colorClass = 'negative';
+                }
+                else {
+                    var updateCol = 'tan',
+                        colorClass = 'same';
+                }
+        console.log(colorClass)
+//        console.log(updateCol)
+        
+        layer.on('mouseover', function (e) {
+            this.setStyle({
+            weight: 5,
+            color: '#F5CBA7',
+            fillColor: updateCol,
+            fillOpacity: 0.7
+        }),
+        layer.bindPopup("<div class ="+colorClass+"><b>"+feature.properties.NAME+"</b></div></b><br>2010 Population: "+feature.properties.POP2010.toLocaleString()+"<br>2000 Population: "+feature.properties.POP2000.toLocaleString()+"<br>Population Change: "+popDiff.toLocaleString()).openPopup;
+            });  
+
+        layer.on('mouseout', function (e) {
+            layer.bindPopup().closePopup(),
+            middleMuns.resetStyle(e.target);
+        });
+    };
+            
+    function rail (feature, layer) {
+        console.log(layer)
+        
+        layer.on('mouseover', function (e) {
+            this.setStyle({
+            weight: 4,
+            color: '#FFFFFF',
+            fillOpacity: 0.7
+        }),
+        layer.bindPopup("<b>"+feature.properties.RAIL_LINE+"</b>").openPopup;
+            });  
+
+        layer.on('mouseout', function (e) {
+            layer.bindPopup().closePopup(),
+            railPassMiddle.resetStyle(e.target);
+        });
+    };
+
+
+
+        </script>
+    </body>
+</html>
