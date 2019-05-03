@@ -21,8 +21,42 @@
             width: 90%;
             height: 95%;
             margin: 10px auto;
-            background-color: gainsboro;
+            background-color: gainsboro; }
+        #map {
+            z-index: 5;
         }
+        #mapHeader {
+            position:absolute;
+            height: auto;
+            width: auto;
+            padding-bottom: 10px;
+            padding-top: 21px;
+            padding-left: 150px;
+            padding-right: 5px;
+            z-index: 10; }
+        #nav {
+            width: 100%;
+            float: left;
+            margin: 0 0 3em 0;
+            padding: 0;
+            list-style: none;
+            background-color: #fff;
+            border-bottom: 1px solid #ccc; 
+            border-top: 1px solid #ccc; }
+        #nav li {
+            float: left; }
+        #nav li a {
+            display: block;
+            padding: 8px 15px;
+            text-decoration: none;
+            font-weight: bold;
+            color: #069;
+            font-size: 1.3em;
+            border-right: 1px solid #fff; }
+        #nav li a:hover {
+	   	   color: #1A2739;
+	   	   background-color: #B8DBF2; }
+        
         h1 {
             text-align: center;
         }
@@ -68,6 +102,14 @@
         <h1>Mapping Population Change, Rail Line and Station Access within Middlesex County, New Jersey</h1>
     </header>
         
+    <div class="topHeader" id="mapHeader" onclick="viewSet()">
+        <ul id="nav">
+            <li><a href="#">Reset Extent</a></li>
+        </ul>
+    </div>
+        
+
+        
         <div id="map"></div>
 
     <footer>
@@ -86,6 +128,12 @@
 
     
         <script>
+    
+    function viewSet() {
+        map.setView([40.439061,-74.411863]),
+        map.setZoom(11)
+    }
+            
 // Base layers
     var hyddaBase = L.tileLayer('https://{s}.tile.openstreetmap.se/hydda/base/{z}/{x}/{y}.png', {
 		attribution: '<a href="http://openstreetmap.se/" target="_blank">OpenStreetMap Sweden</a><br><a href="https://github.com/jtheaton">James Heaton</a> | Web Mapping &amp; Map Servers | Spring 2019'
